@@ -8,6 +8,15 @@ import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { chatAPI } from '../../services/api';
 
+interface Attachment {
+  id: string;
+  filename: string;
+  original_name: string;
+  mime_type: string;
+  file_size: number;
+  storage_path: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -15,14 +24,7 @@ interface Message {
   created_at: string;
   model?: string;
   tools_used?: string[];
-  attachments?: Array<{
-    id: string;
-    filename: string;
-    original_name: string;
-    mime_type: string;
-    file_size: number;
-    storage_path: string;
-  }>;
+  attachments?: Attachment[];
 }
 
 interface AttachmentPreview {

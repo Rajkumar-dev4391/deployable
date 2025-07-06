@@ -97,20 +97,10 @@ class Chat {
             throw chatError;
         }
         
-        // Get messages for this chat with attachments
+        // Get messages for this chat
         const { data: messages, error: messagesError } = await supabase
             .from('messages')
-            .select(`
-                *,
-                attachments (
-                    id,
-                    filename,
-                    original_name,
-                    mime_type,
-                    file_size,
-                    storage_path
-                )
-            `)
+            .select('*')
             .eq('chat_id', chatId)
             .order('created_at', { ascending: true });
         
@@ -118,9 +108,26 @@ class Chat {
             throw messagesError;
         }
         
+        // Get attachments for each message separately
+        const messagesWithAttachments = await Promise.all(
+            (messages || []).map(async (message) => {
+                const { data: attachments, error: attachError } = await supabase
+                    .from('attachments')
+                    .select('id, filename, original_name, mime_type, file_size, storage_path')
+                    .eq('message_id', message.id);
+                
+                if (attachError) {
+                    console.error('Error loading attachments for message:', message.id, attachError);
+                    return { ...message, attachments: [] };
+                }
+                
+                return { ...message, attachments: attachments || [] };
+            })
+        );
+        
         return {
             ...chat,
-            messages: messages || []
+            messages: messagesWithAttachments
         };
     }
 }

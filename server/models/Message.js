@@ -1,7 +1,7 @@
 const supabase = require('../config/supabase');
 
 class Message {
-  static async create({ chatId, userId, role, content, model, toolsUsed = [], attachments = [], metadata = {} }) {
+  static async create({ chatId, userId, role, content, model, toolsUsed = [], metadata = {} }) {
     const { data, error } = await supabase
       .from('messages')
       .insert([{
@@ -11,7 +11,6 @@ class Message {
         content,
         model,
         tools_used: toolsUsed,
-        attachments,
         metadata,
         created_at: new Date().toISOString()
       }])
@@ -40,27 +39,35 @@ class Message {
   }
 
   static async findByChatId(chatId) {
-    const { data, error } = await supabase
+    // Get messages first
+    const { data: messages, error: messagesError } = await supabase
       .from('messages')
-      .select(`
-        *,
-        attachments (
-          id,
-          filename,
-          original_name,
-          mime_type,
-          file_size,
-          storage_path
-        )
-      `)
+      .select('*')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
     
-    if (error) {
-      throw error;
+    if (messagesError) {
+      throw messagesError;
     }
     
-    return data || [];
+    // Get attachments for each message separately
+    const messagesWithAttachments = await Promise.all(
+      (messages || []).map(async (message) => {
+        const { data: attachments, error: attachError } = await supabase
+          .from('attachments')
+          .select('id, filename, original_name, mime_type, file_size, storage_path')
+          .eq('message_id', message.id);
+        
+        if (attachError) {
+          console.error('Error loading attachments for message:', message.id, attachError);
+          return { ...message, attachments: [] };
+        }
+        
+        return { ...message, attachments: attachments || [] };
+      })
+    );
+    
+    return messagesWithAttachments;
   }
 
   static async update(id, updates) {
