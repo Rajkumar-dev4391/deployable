@@ -3,6 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } fro
 import { LoginPage } from './components/auth/LoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ChatLayout } from './components/chat/ChatLayout';
+import { SettingsPage } from './components/settings/SettingsPage';
+import { MCPWorkflowPage } from './components/workflow/MCPWorkflowPage';
+import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
+import { TermsConditions } from './components/legal/TermsConditions';
 import { useAuthStore } from './store/authStore';
 import { authAPI } from './services/api';
 
@@ -24,10 +28,8 @@ const AuthCallbackHandler: React.FC = () => {
         }
 
         if (token) {
-          // Store the token
           setToken(token);
           
-          // Verify the token and get user info
           const response = await authAPI.checkAuth();
           
           if (response.data.authenticated && response.data.user) {
@@ -62,13 +64,11 @@ function App() {
   const { isAuthenticated, isLoading, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // Check for auth errors in URL
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     
     if (error) {
       console.error('Auth error:', error);
-      // Clear the error from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
@@ -97,6 +97,10 @@ function App() {
           } 
         />
         
+        {/* Legal Pages */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        
         {/* Auth Callback Route */}
         <Route 
           path="/auth/callback" 
@@ -123,22 +127,10 @@ function App() {
         />
         
         <Route
-          path="/dashboard"
+          path="/settings"
           element={
             <ProtectedRoute>
-              <ChatLayout />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/config"
-          element={
-            <ProtectedRoute>
-              <div className="p-8">
-                <h1 className="text-2xl font-bold">MCP Configuration</h1>
-                <p>Configuration page coming soon...</p>
-              </div>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
@@ -147,10 +139,7 @@ function App() {
           path="/workflow"
           element={
             <ProtectedRoute>
-              <div className="p-8">
-                <h1 className="text-2xl font-bold">Workflow</h1>
-                <p>Workflow page coming soon...</p>
-              </div>
+              <MCPWorkflowPage />
             </ProtectedRoute>
           }
         />
