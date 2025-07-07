@@ -1673,7 +1673,7 @@ app.delete('/api/chat/:chatId', requireAuth, async (req, res) => {
 
 
 // Feedback routes
-app.post('/api/feedback', authenticateToken, async (req, res) => {
+app.post('/api/feedback', requireAuth, async (req, res) => {
   try {
     const { message, rating } = req.body;
     const user = req.user;
