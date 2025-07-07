@@ -34,8 +34,7 @@ const corsOptions = {
         const allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:5173',
-            'https://orbitmcp.vercel.app',
-            'https://deployable-kappa.vercel.app',
+            'https://orbitmcpai.vercel.app',
             'https://froned-new-me.vercel.app',
             'https://ai-chatbot-backend-y75u.onrender.com'
         ];
