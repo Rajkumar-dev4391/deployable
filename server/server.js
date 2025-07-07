@@ -15,6 +15,7 @@ const Attachment = require('./models/Attachment');
 const AuthToken = require('./models/AuthToken');
 const FileUploadService = require('./services/fileUpload');
 const FileParser = require('./services/fileParser');
+const Feedback = require('./models/Feedback');
 require('dotenv').config();
 
 const app = express();
@@ -1248,6 +1249,9 @@ app.get('/auth/user', async (req, res) => {
         });
     }
 });
+
+
+
 app.post('/auth/logout', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -1666,6 +1670,58 @@ app.delete('/api/chat/:chatId', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete chat' });
     }
 });
+
+
+// Feedback routes
+app.post('/api/feedback', authenticateToken, async (req, res) => {
+  try {
+    const { message, rating } = req.body;
+    const user = req.user;
+
+    console.log('📝 Submitting feedback for user:', user.email);
+
+    if (!message || !rating) {
+      return res.status(400).json({ error: 'Message and rating are required' });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+
+    const feedback = await Feedback.create({
+      userId: user.id,
+      userName: user.name,
+      userImage: user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`,
+      message: message.trim(),
+      rating
+    });
+
+    console.log('✅ Feedback submitted successfully:', feedback.id);
+    res.json({ 
+      message: 'Feedback submitted successfully',
+      feedback: {
+        id: feedback.id,
+        message: feedback.message,
+        rating: feedback.rating,
+        created_at: feedback.created_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Feedback submission error:', error);
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+app.get('/api/feedback', async (req, res) => {
+  try {
+    const feedback = await Feedback.findPublicFeedback(10);
+    res.json({ feedback });
+  } catch (error) {
+    console.error('Get feedback error:', error);
+    res.status(500).json({ error: 'Failed to get feedback' });
+  }
+});
+
 
 // Tools API
 app.get('/api/tools', (req, res) => {
